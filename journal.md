@@ -20,3 +20,13 @@
 - Fixed import issues using editable install (pip install -e .).
 
 - Ensured all tests pass and file handling works as intended.
+
+# Day 2 - 26/09/2025
+
+- Started on core_functions and so far developed: add_income, add_expense, view_all_records and calculate_total_expenses
+
+- Decided to divide the functions into income and expense. Ex: min_income, min_expense, calculate_total_income,...
+
+- Test the functions I developed today, covered normal scenarios only; edge cases deferred for later
+
+- Opted for handling user input in the future, to have the code in core_functions clean
