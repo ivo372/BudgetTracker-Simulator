@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import os
 from tabulate import tabulate
 
@@ -30,12 +29,3 @@ def add_record(file_path, record):
     df = pd.concat([df, pd.DataFrame([record])], ignore_index = True) # Adding one row to the dataframe
     save_data(file_path, df)
     return tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=False)
-
-
-
-file = "data/budget_data.csv"
-
-record = {"Date": "27/05/25", "Type":"Expense", "Category": "Eletronics", "Amount": 150.98, "Note": ""}
-
-test_record = add_record(file, record)
-print(test_record)
