@@ -30,3 +30,13 @@
 - Test the functions I developed today, covered normal scenarios only; edge cases deferred for later
 
 - Opted for handling user input in the future, to have the code in core_functions clean
+
+# Day 3 - 29/09/2025
+
+- Finished developing and testing **Create** and **Read** functions:
+    - Added **calculate_total_income** and upgraded **calculate_total_expenses**
+    - Added **min/max/avg** functions for income and expenses
+    - Category-based summaries
+    - **print_report** tested with **capsys** 
+- Separated tests into clear sections: **min/max/avg**, **add**, **total**, **category**, **view**, **print**
+- Next steps: develop **Delete** and **Update** functions
