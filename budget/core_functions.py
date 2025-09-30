@@ -7,7 +7,13 @@ class BudgetTracker:
         self.df = load_data(data_file)
 
     def add_expense(self, date, category, amount, note=""):
+        if self.df.empty:
+            new_id = 1
+        else:
+            new_id = self.df['ID'].max() + 1
+            
         record = {
+            "ID": new_id,
             "Date": date,
             "Type": "Expense", # Default value of type in add_expense function
             "Category": category, 
@@ -18,7 +24,13 @@ class BudgetTracker:
         self.df = load_data(self.data_file) # Refresh the file and the value stored in the variable
 
     def add_income(self, date, category, amount, note=""):
+        if self.df.empty:
+            new_id = 1
+        else:
+            new_id = self.df['ID'].max() + 1
+
         record = {
+            "ID": new_id,
             "Date": date,
             "Type": "Income", # Default value of type in add_income function
             "Category": category, 
@@ -33,29 +45,21 @@ class BudgetTracker:
 
         
     def calculate_total_expense(self):
-        if self.df.empty: # Checks for records in the dataframe
-            return 0
         total_expenses_df = self.df[self.df['Type'] == 'Expense'] # Get all the rows with Expense Type
         return total_expenses_df['Amount'].sum()
     
     def calculate_total_income(self):
-        if self.df.empty:
-            return 0
         total_income_df = self.df[self.df['Type'] == 'Income']
         return total_income_df['Amount'].sum()
                 
 
     def calculate_expenses_category(self):
-        if self.df.empty:
-            return self.df
         expenses = self.df[self.df['Type'] == 'Expense']
         category = expenses.groupby('Category')['Amount'].sum() # Group by Category and gets total sum of each
         category_df = category.reset_index(name="Total") # Convert the grouped Series to a DataFrame and name the summed column 'Total'
         return category_df
         
     def calculate_income_category(self):
-        if self.df.empty:
-            return self.df
         incomes = self.df[self.df['Type'] == 'Income']
         category_df = incomes.groupby('Category')['Amount'].sum()
         category_df = category_df.reset_index(name="Total")
@@ -65,40 +69,28 @@ class BudgetTracker:
         pass # Could be implemented later if monthly tracking is needed
 
     def calculate_min_expense(self):
-        if self.df.empty:
-            return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].min()
         # min_expense = self.df[self.df['Amount'] == self.df['Amount'].min()].iloc[0]
         # return min_expense[['Category', 'Amount']]  Formatting Output for UX
 
     def calculate_min_income(self):
-        if self.df.empty:
-            return 0
         incomes = self.df[self.df['Type'] == 'Income']
         return incomes['Amount'].min()
 
     def calculate_max_expense(self):
-        if self.df.empty:
-            return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].max()
     
     def calculate_max_income(self):
-        if self.df.empty:
-            return 0
         incomes = self.df[self.df['Type'] == 'Income']
         return incomes['Amount'].max()
 
     def calculate_avg_expenses(self):
-        if self.df.empty:
-            return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].mean()
     
     def calculate_avg_income(self):
-        if self.df.empty: 
-            return 0
         incomes = self.df[self.df['Type'] == 'Income']
         return incomes['Amount'].mean()
 
@@ -118,6 +110,10 @@ class BudgetTracker:
         print(f"Average Income: {self.calculate_avg_income()}€\n")
         print(f"Expenses by category:\n {self.calculate_expenses_category()}\n")
 
-
-
-
+    def delete_one_row(self, id):
+        self.df = self.df[self.df['ID'] != id] #keeps all rows where ID != id
+        save_data(self.data_file, self.df)
+    
+    def delete_all_rows(self):
+        self.df = self.df.iloc[0:0]
+        save_data(self.data_file,self.df)

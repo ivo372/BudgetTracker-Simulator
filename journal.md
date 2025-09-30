@@ -40,3 +40,15 @@
     - **print_report** tested with **capsys** 
 - Separated tests into clear sections: **min/max/avg**, **add**, **total**, **category**, **view**, **print**
 - Next steps: develop **Delete** and **Update** functions
+
+# Day 4 - 30/09/2025
+
+- Worked on the "Delete" functionality for the budget tracker.
+
+- Implemented **delete_one_row** using row ID and **delete_all_rows** to clear the dataframe.
+
+- Due to adding an ID column to the dataframe, had to make some updates in some previously tested functions.
+
+- Decided not to include emptiness checks inside core functions, leaving that logic to the UX/main layer.
+
+- Did not test today; Next Steps: fix tests and add "Update" functions
