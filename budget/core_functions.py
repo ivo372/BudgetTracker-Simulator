@@ -1,5 +1,6 @@
 from budget.file_handling import create_file, load_data, save_data, add_record
 from tabulate import tabulate
+from datetime import datetime
 
 class BudgetTracker:
     def __init__(self, data_file):
@@ -7,6 +8,18 @@ class BudgetTracker:
         self.df = load_data(data_file)
 
     def add_expense(self, date, category, amount, note=""):
+        # Prepare parameters for validation
+        params = {
+            "date": date,
+            "category": category,
+            "amount": amount,
+            "note": note
+        }
+
+        validated = self.validate_record(**params)
+        if isinstance(validated, str):  # validation error returned
+            return validated
+        
         if self.df.empty:
             new_id = 1
         else:
@@ -14,16 +27,28 @@ class BudgetTracker:
             
         record = {
             "ID": new_id,
-            "Date": date,
+            "Date": validated["Date"],
             "Type": "Expense", # Default value of type in add_expense function
-            "Category": category, 
-            "Amount": amount,
-            "Note": note
+            "Category": validated["Category"], 
+            "Amount": validated["Amount"],
+            "Note": validated["Note"]
             }
         add_record(self.data_file, record)
         self.df = load_data(self.data_file) # Refresh the file and the value stored in the variable
 
     def add_income(self, date, category, amount, note=""):
+        # Prepare parameters for validation
+        params = {
+            "date": date,
+            "category": category,
+            "amount": amount,
+            "note": note
+        }
+
+        validated = self.validate_record(**params)
+        if isinstance(validated, str):  # validation error returned
+            return validated
+        
         if self.df.empty:
             new_id = 1
         else:
@@ -31,12 +56,12 @@ class BudgetTracker:
 
         record = {
             "ID": new_id,
-            "Date": date,
+            "Date": validated["Date"],
             "Type": "Income", # Default value of type in add_income function
-            "Category": category, 
-            "Amount": amount,
-            "Note": note
-            }
+            "Category": validated["Category"], 
+            "Amount": validated["Amount"],
+            "Note": validated["Note"]
+        }
         add_record(self.data_file, record) # Calling add_record to add the information to the df and export it to csv 
         self.df = load_data(self.data_file)
 
@@ -110,10 +135,75 @@ class BudgetTracker:
         print(f"Average Income: {self.calculate_avg_income()}€\n")
         print(f"Expenses by category:\n {self.calculate_expenses_category()}\n")
 
-    def delete_one_row(self, id):
-        self.df = self.df[self.df['ID'] != id] #keeps all rows where ID != id
+    def delete_one_row(self, delete_id):
+        if delete_id not in self.df['ID'].values:
+            raise ValueError(f"Record with ID {delete_id} not found!")
+        self.df = self.df[self.df['ID'] != delete_id] #keeps all rows where ID != id
         save_data(self.data_file, self.df)
     
     def delete_all_rows(self):
         self.df = self.df.iloc[0:0]
         save_data(self.data_file,self.df)
+
+    def update_record(self, record_id, field, new_value):
+        if record_id not in self.df['ID'].values:
+            raise ValueError(f'Record with ID {record_id} not found!')
+
+        # Prepare parameters for validation
+        params = {key: None for key in ["date", "category", "amount", "note"]}
+        params[field.lower()] = new_value
+
+        validated = self.validate_record(**params)
+        if isinstance(validated, str):  # validation error returned
+            return validated
+
+        # Assign only the validated value for the field
+        self.df.loc[self.df['ID'] == record_id, field] = validated[field.lower()]
+        save_data(self.data_file, self.df)
+    
+    def validate_record(self, date=None, category=None, amount=None, note=None):
+        validated = {}
+
+        if date is not None:
+            try:
+                datetime.strptime(date, '%d/%m/%y')
+            except ValueError:
+                return "Invalid date format. Use DD/MM/YY"
+            if not date:
+                return "Date cannot be empty!"
+            validated["Date"] = date
+
+        if category is not None:
+            if not isinstance(category, str):
+                return "Category must be a string"
+            if not category:
+                return "Category cannot be empty!"
+            validated["Category"] = category
+
+        if amount is not None:
+            try:
+                amount = float(amount)
+            except ValueError:
+                return "Amount must be a number"
+            if not amount:
+                return "Amount cannot be empty!"
+            if str(amount).strip() == "":
+                return "Amount cannot be negative"
+            validated["Amount"] = amount
+
+        if note is not None:
+            if not isinstance(note, str):
+                return "Note must be a string"
+            validated["Note"] = note
+
+        return validated
+    
+    def update_type(self, row_id):
+        if row_id not in self.df['ID'].values:
+            raise ValueError(f'Record with ID {row_id} not found!')
+        current_type = self.df.loc[self.df['ID'] == row_id, 'Type'].iloc[0] 
+        if current_type == "Expense":
+            self.df.loc[self.df['ID'] == row_id, 'Type'] = "Income"
+        else:
+            self.df.loc[self.df['ID'] == row_id, 'Type'] = "Expense"
+        save_data(self.data_file, self.df)           

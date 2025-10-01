@@ -52,3 +52,19 @@
 - Decided not to include emptiness checks inside core functions, leaving that logic to the UX/main layer.
 
 - Did not test today; Next Steps: fix tests and add "Update" functions
+
+# Day 5 - 01/10/2025
+
+- Implemented update functionalities: **update_record** and **update_type** in core functions.
+
+- Added validation logic via **validate_record** to unify checks for date format, negative amounts, string types, and empty values.
+
+- Integrated validation into **add_expense**, **add_income** and **update_record** functions to ensure data consistency.
+
+- Core functions now fully cover CRUD operations with stable IDs and proper validation
+
+- **Next Steps**:
+    
+    - Reorganize and consolidate tests to reflect updated validation and new functions.
+
+    - Begin UX implementation
