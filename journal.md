@@ -68,3 +68,21 @@
     - Reorganize and consolidate tests to reflect updated validation and new functions.
 
     - Begin UX implementation
+
+# Day 6 - 02/10/2025
+
+- Strengthened file handling: ensured all columns exist, safe type coercion, auto-assigned IDs.
+
+- Updated core functions and tests: defensive checks added for empty data, invalid input, negative amounts.
+
+- Fixed issues: **view_all_records** ID dtype, min/max/avg calculations on empty DataFrames, **validate_record** rejecting invalid amounts.
+
+- Ran full test suite – all 15 tests passed ✅
+
+- Planned UX: structured main menu, input handling, and category report display (considering tabulate for tables).
+
+- **Next Steps**:
+
+    - Finish UX
+
+    - Test UX

@@ -14,8 +14,27 @@ def create_file(file_path):
 def load_data(file_path):
     if not os.path.exists(file_path):
         create_file(file_path)
-    df = pd.read_csv(file_path, dtype={"ID": int, "Date": str, "Type": str, "Category": str, "Amount": float, "Note": str}) # reading the csv file for dataframe format
-    df["Note"] = df["Note"].fillna('')  # replaces any NaN with empty string
+    df = pd.read_csv(file_path)
+
+    # Ensure expected columns exist
+    for col in ["ID","Date","Type","Category","Amount","Note"]:
+        if col not in df.columns:
+            df[col] = pd.Series(dtype="object")  # temporary
+
+    # Coerce types safely
+    # For ID: nullable integer (handles empty DF)
+    if "ID" in df.columns:
+        try:
+            df["ID"] = df["ID"].astype("Int64")
+        except Exception:
+            # If conversion fails, fill with NaN Int64 and no crash
+            df["ID"] = pd.Series([pd.NA]*len(df), dtype="Int64")
+
+    # Amount: try numeric, leave NaN if impossible
+    df["Amount"] = pd.to_numeric(df["Amount"], errors="coerce")
+
+    df["Note"] = df["Note"].fillna("")  # replaces any NaN with empty string
+    
     return df
 
 def save_data(file_path, df):
@@ -26,6 +45,17 @@ def add_record(file_path, record):
     if not os.path.exists(file_path): #In case the user tries to add a record, without having the file created
         create_file(file_path)
     df = load_data(file_path)
-    df = pd.concat([df, pd.DataFrame([record])], ignore_index = True) # Adding one row to the dataframe
+    
+    if "ID" not in record:
+        if df.empty or df["ID"].isna().all():
+            new_id = 1
+        else:
+            new_id = int(df["ID"].max()) + 1
+        record["ID"] = new_id
+    
+    # Build row DF and align columns
+    row_df = pd.DataFrame([record])
+    row_df = row_df.reindex(columns=df.columns)  # missing columns get NaN
+    df = pd.concat([df, row_df], ignore_index=True)
     save_data(file_path, df)
     return df

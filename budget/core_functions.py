@@ -94,28 +94,40 @@ class BudgetTracker:
         pass # Could be implemented later if monthly tracking is needed
 
     def calculate_min_expense(self):
+        if self.df.empty:
+            return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].min()
         # min_expense = self.df[self.df['Amount'] == self.df['Amount'].min()].iloc[0]
         # return min_expense[['Category', 'Amount']]  Formatting Output for UX
 
     def calculate_min_income(self):
+        if self.df.empty:
+            return 0
         incomes = self.df[self.df['Type'] == 'Income']
         return incomes['Amount'].min()
 
     def calculate_max_expense(self):
+        if self.df.empty:
+            return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].max()
     
     def calculate_max_income(self):
+        if self.df.empty:
+            return 0
         incomes = self.df[self.df['Type'] == 'Income']
         return incomes['Amount'].max()
 
     def calculate_avg_expenses(self):
+        if self.df.empty:
+            return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].mean()
     
     def calculate_avg_income(self):
+        if self.df.empty:
+            return 0
         incomes = self.df[self.df['Type'] == 'Income']
         return incomes['Amount'].mean()
 
@@ -127,13 +139,28 @@ class BudgetTracker:
         category = self.df[self.df['Amount'] == max_value]['Category'] # Find categories corresponding to the max expense
         categories_str = ", ".join(category.tolist()) # Convert categories to a string, allowing multiple categories if needed
         print("===== Budget Report =====\n")
-        print(f"Total Income: {self.calculate_total_income()}€\n")
+
+        # Totals
+        print(f"Total Income: {self.calculate_total_income()}€")
         print(f"Total Expenses: {self.calculate_total_expense()}€\n")
-        print(f"Most Expensive Purchase: {max_value}€ ({categories_str})\n")
+
+        # Max/Avg Stats
+        print(f"Most Expensive Purchase: {max_value}€ ({categories_str})")
         print(f"Average Expense: {self.calculate_avg_expenses()}€\n")
-        print(f"Highest Income: {self.calculate_max_income()}€\n")
+        print(f"Highest Income: {self.calculate_max_income()}€")
         print(f"Average Income: {self.calculate_avg_income()}€\n")
-        print(f"Expenses by category:\n {self.calculate_expenses_category()}\n")
+
+        # Expenses by Category
+        print("Expenses by category:")
+        expenses_cat = self.calculate_expenses_category()
+        for _, row in expenses_cat.iterrows():
+            print(f"- {row['Category']}: {row['Total']}€")
+
+        # Expenses by Income
+        print("\nIncome by Category:")
+        income_cat = self.calculate_income_category()
+        for _, row in income_cat.iterrows():
+            print(f"- {row['Category']}: {row['Total']}€")
 
     def delete_one_row(self, delete_id):
         if delete_id not in self.df['ID'].values:
@@ -142,42 +169,56 @@ class BudgetTracker:
         save_data(self.data_file, self.df)
     
     def delete_all_rows(self):
-        self.df = self.df.iloc[0:0]
+        self.df = self.df.head(0)
         save_data(self.data_file,self.df)
 
     def update_record(self, record_id, field, new_value):
         if record_id not in self.df['ID'].values:
             raise ValueError(f'Record with ID {record_id} not found!')
 
+        # Map lowercase input to DataFrame column names
+        field_map = {
+            "date": "Date",
+            "category": "Category",
+            "amount": "Amount",
+            "note": "Note"
+        }
+
+        # Normalize the field
+        field_lower = field.lower()
+        if field_lower not in field_map:
+            raise ValueError(f"Invalid field: {field}. Choose from Date, Category, Amount, Note.")
+        
         # Prepare parameters for validation
-        params = {key: None for key in ["date", "category", "amount", "note"]}
-        params[field.lower()] = new_value
+        # Prepare params for validation
+        params = {key: None for key in field_map.keys()}
+        params[field_lower] = new_value
 
         validated = self.validate_record(**params)
         if isinstance(validated, str):  # validation error returned
             return validated
+        
+        # Update DataFrame with validated value
+        df_field = field_map[field_lower]
+        self.df.loc[self.df['ID'] == record_id, df_field] = validated[df_field]
 
-        # Assign only the validated value for the field
-        self.df.loc[self.df['ID'] == record_id, field] = validated[field.lower()]
         save_data(self.data_file, self.df)
     
     def validate_record(self, date=None, category=None, amount=None, note=None):
         validated = {}
 
         if date is not None:
+            if not date.strip():
+                return "Date cannot be empty!"
             try:
                 datetime.strptime(date, '%d/%m/%y')
             except ValueError:
                 return "Invalid date format. Use DD/MM/YY"
-            if not date:
-                return "Date cannot be empty!"
             validated["Date"] = date
 
         if category is not None:
-            if not isinstance(category, str):
-                return "Category must be a string"
-            if not category:
-                return "Category cannot be empty!"
+            if not isinstance(category, str) or not category.strip():
+                return "Category must be a non-empty string"
             validated["Category"] = category
 
         if amount is not None:
@@ -185,10 +226,8 @@ class BudgetTracker:
                 amount = float(amount)
             except ValueError:
                 return "Amount must be a number"
-            if not amount:
-                return "Amount cannot be empty!"
-            if str(amount).strip() == "":
-                return "Amount cannot be negative"
+            if amount <= 0:
+                return "Amount must be positive!"
             validated["Amount"] = amount
 
         if note is not None:
