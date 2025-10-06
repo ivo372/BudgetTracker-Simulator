@@ -86,3 +86,23 @@
     - Finish UX
 
     - Test UX
+
+# Day 7 - 06/10/2025
+
+- Finished UX
+
+- Fixed some core_functions to raise Exceptions
+
+- Tested UX from user perspective
+
+- Added visual feedback, instead of just "Sucessfully added/updated"
+
+- **Next Steps**
+
+    - Test UX from user perspective one last time
+
+    - Update dependencies file
+
+    - Update Readme
+
+    - Deploy the final version to github

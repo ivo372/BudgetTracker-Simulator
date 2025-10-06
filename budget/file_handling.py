@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-from tabulate import tabulate
 
 def create_file(file_path):
     if not os.path.exists(file_path) or (os.path.exists(file_path) and os.path.getsize(file_path) == 0): # Checking if the file exists

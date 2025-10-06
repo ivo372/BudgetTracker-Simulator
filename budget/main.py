@@ -1,13 +1,43 @@
 from budget.core_functions import BudgetTracker
 from tabulate import tabulate
+import re
+import os
 
 def main():
-    budget = BudgetTracker()
-
     print("=== Welcome to the Budget Simulator ===")
     print("\nTips:")
     print("\t- Read the menus carefully.")
     print("\t- Pay attention to the guide messages, they'll be helpful, if you are lost.")
+
+    file_name = input("\nEnter your budget file name (without extension, press Enter for default): ").strip()
+
+    # Strip whitespace
+    filename = file_name.strip()
+    
+    # Remove invalid characters
+    filename = re.sub(r'[<>:"/\\|?*]', "", filename)
+    
+    # Remove all trailing extensions like .csv, .json, .txt
+    filename = re.sub(r'(\.[^.]+)+$', '', filename)  # removes last dot + whatever follows, including repeated
+    
+    # Handle empty filename after cleaning
+    if not filename:
+        filename = "budget"
+
+    filename = filename + ".csv"
+
+    if filename == "budget.csv" and file_name.strip() != "budget" and file_name.strip() != "":
+        print("\n ⚠️  Invalid or unsafe file name detected. Using default: budget.csv")
+
+    # Make sure 'data' folder exists
+    folder = "data"
+    os.makedirs(folder, exist_ok=True)
+
+    # Build full path
+    file_path = os.path.join(folder, filename)
+
+    budget = BudgetTracker(file_path)
+    print(f"\n✅ Using budget file: {filename}")
 
     while True:
         print("\nChoose an option:")
@@ -15,12 +45,12 @@ def main():
         print("\t2- Calculations")
         print("\t3- Update file")
         print("\t4- Delete from file")
-        print("\t5- Display on terminal")
+        print("\t5- Display")
         print("\t6- Exit")
 
         choice = input("\nChoose one of the option above(1/2/3/4/5/6): ")
         if choice in ("1", "2", "3", "4", "5", "6"):
-            if choice == 1:
+            if choice == "1":
                 while True:
                     print("\nChoose an option:")
                     print("\t1- Add expense")
@@ -36,16 +66,23 @@ def main():
                                 add_expense_note = input("\nAdd a note to this expense, if you wish you can leave it empty: ")
 
                                 try:
-                                    add_expense_amount = float(add_expense_amount) # Try converting amount to float (defensive)
-                                    
+                                    # Get the next ID
+                                    add_expense_next_id = (budget.df['ID'].max() or 0) + 1
+
                                     # Attempt to add expense
                                     budget.add_expense(add_expense_date,add_expense_category,add_expense_amount,add_expense_note)
-                                except ValueError:
-                                    print("\n❌ Amount must be a number. Try again.")
-                                except Exception as e:
+
+                                    # Get the new row
+                                    add_expense_new_row = budget.df[budget.df['ID'] == add_expense_next_id]
+
+                                except ValueError as e:
                                     print(f"\n❌ Failed to add expense: {e}. Try again!")
+                                    add_expense_exit = input("\nDo you wish to try again(y/n): ").lower().strip()
+                                    if add_expense_exit not in ("y", "yes", "yep", "ye"):
+                                        break
                                 else:
-                                    print("\n✅ Expense added sucessfully!")
+                                    print("\n✅ Expense added sucessfully!\n")
+                                    print(tabulate(add_expense_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
                                     break
                         
                         elif choice_add == "2":
@@ -56,21 +93,27 @@ def main():
                                 add_income_note = input("\nAdd a note to this income, if you wish you can leave it empty: ")
                                 
                                 try:
-                                    add_income_amount = float(add_income_amount)
-                                    budget.add_expense(add_income_date,add_income_category,add_income_amount,add_income_note)
-                                except ValueError:
-                                    print("\n❌ Amount must be a number. Try again.")
-                                except Exception as e:
+                                    add_income_next_id = (budget.df['ID'].max() or 0) + 1
+
+                                    budget.add_income(add_income_date,add_income_category,add_income_amount,add_income_note)
+
+                                    add_income_new_row = budget.df[budget.df['ID'] == add_income_next_id]
+
+                                except ValueError as e:
                                     print(f"\n❌ Failed to add income: {e}. Try again!")
+                                    add_income_exit = input("\nDo you wish to try again(y/n): ").lower().strip()
+                                    if add_income_exit not in ("y", "yes", "yep", "ye"):
+                                        break
                                 else:
-                                    print("\n✅ Income added sucessfully!")
+                                    print("\n✅ Income added sucessfully!\n")
+                                    print(tabulate(add_income_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
                                     break
                         
                         elif choice_add == "3":
                             break
                         
                     else:
-                        print("\nInvalid choice. Select an option between 1 and 3!")
+                        print("\n❌ Invalid choice. Select an option between 1 and 3!")
                         continue
             
             elif choice == "2":
@@ -120,7 +163,7 @@ def main():
                                 df_expense_category = budget.calculate_expenses_category()
                                     
                                 if df_expense_category.empty:
-                                    print("No expenses recorded ❌")
+                                    print("No records of expenses recorded ❌")
 
                                 print(tabulate(df_expense_category, headers='keys', tablefmt='fancy_grid', showindex=False))
 
@@ -128,7 +171,7 @@ def main():
                                 df_income_category = budget.calculate_income_category()
                                     
                                 if df_income_category.empty:
-                                    print("No income recorded ❌")
+                                    print("No records of income recorded ❌")
 
                                 print(tabulate(df_income_category, headers='keys', tablefmt='fancy_grid', showindex=False))
 
@@ -191,22 +234,148 @@ def main():
                         continue
 
             elif choice == "3":
+                print("\nRead This:")
+                print("\n\tOption 1 requires that you know the ID of the row you want to update,\n you can access that ID by going to 'Display'")
+                print("\n\tOption 2 is to exchange the type of record,\n" \
+                "meaning Income changes for Expense and Expense changes for Income.\n" \
+                "By selecting this option the change will take immediate effect,\n" \
+                "so becareful if you don't want to change the type of record")
+
                 while True:
                     print("\nUpdate Options:")
                     print("\t1- Update record section")
                     print("\t2- Update Type")
                     print("\n3- Back")
 
-                    print("\nRead This:")
-                    print("\n\tOption 1 requires that you know the ID of the row you want to update,\n you can access that ID by going to 'Display'")
-                    print("\n\tOption 2 is to exchange the type of record,\n" \
-                    "meaning Income changes for Expense and Expense changes for Income.\n" \
-                    "By selecting this option the change will take immediate effect,\n" \
-                    "so becareful if you don't want to change the type of record")
-
                     choice_update = input("\nSelect one of the options above(1/2/3): ")  
 
-                    # Continue here
+                    if choice_update == "1":
+                        while True:
+                            record_id = int(input("Write the 'id' of the record you want to update: "))
+                            field = input("Write the 'field' you want to update(Date/Category/Amount/Note): ")
+                            new_value = input("Write the new value for the field you want to update: ")
+
+                            try:
+                                update_record_next_id = (budget.df['ID'].max() or 0) + 1
+
+                                budget.update_record(record_id, field, new_value)
+
+                                update_record_new_row = budget.df[budget.df['ID'] == update_record_next_id]
+
+                            except ValueError as e:
+                                print(f"\n❌ Failed to update record: {e}. Try again!")
+                                update_record_exit = input("\nDo you wish to try again(y/n): ").lower().strip()
+                                if update_record_exit not in ("y", "yes", "yep", "ye"):
+                                    break
+                            else:
+                                print("\n✅ Record Field updated sucessfully!\n")
+                                print(tabulate(update_record_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
+                                break
+                    
+                    elif choice_update == "2":
+                        while True:
+                            row_id = int(input("Write the 'id' of the record you want to update the type: "))
+
+                            try:
+                                update_type_next_id = (budget.df['ID'].max() or 0) + 1
+
+                                budget.update_type(row_id)
+
+                                update_type_new_row = budget.df[budget.df['ID'] == update_type_next_id]
+
+                            except ValueError as e:
+                                print(f"\n❌ Failed to update type: {e}. Try again!")
+                                update_type_exit = input("\nDo you wish to try again(y/n): ").lower().strip()
+                                if update_type_exit not in ("y", "yes", "yep", "ye"):
+                                    break
+                            else:
+                                print("\n✅ Record Type updated sucessfully!\n")
+                                print(tabulate(update_type_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
+                                break
+                    
+                    elif choice_update == "3":
+                        break
+
+                    else:
+                        print("\n❌ Invalid choice. Select a number between 1 and 3")
+                        continue
+                
+            elif choice == "4":
+                print("\nRead This:")
+                print("\n\tOption 1 requires the record id you want to delete, to find the id, \n" \
+                "you can go to 'display option', and find the id in the first column")
+                print("\n\tOption 2 is to delete all records currently present on the file, \n " \
+                "by selecting this option all records will be deleted and there is no back up, so be careful")
+                
+                while True:
+                    print("\nChoose an option:")
+                    print("\t1- Delete one record")
+                    print("\t2- Delete all records")
+                    print("\n3- Back")
+
+                    choice_delete = input("\nSelect one of the options above(1/2/3): ")
+
+                    if choice_delete == "1":
+                        while True:
+                            delete_id = int(input("\nWrite the id of the record you want to delete: "))
+
+                            try:
+                                budget.delete_one_row(delete_id)
+                            except ValueError as e:
+                                print(f"\n❌ Failed to delete record: {e}. Try again!")
+                                delete_row_exit = input("\nDo you wish to try again(y/n): ").lower().strip()
+                                if delete_row_exit not in ("y", "yes", "yep", "ye"):
+                                    break
+                            else:
+                                print("\n✅ Record deleted sucessfully!")
+                                break
+
+                    elif choice_delete == "2": 
+                        try:
+                            budget.delete_all_rows()
+                        except ValueError as e:
+                            print(f"\n❌ Failed to delete all records: {e}. Try again!")
+                        else:
+                            print("\n✅ All record deleted sucessfully!")
+
+                    elif choice_delete == "3":
+                        break
+
+                    else:
+                        print("\n❌ Invalid choice. Select an option between 1 and 3!")
+                        continue
+                        
+            elif choice == "5":
+                while True:
+                    print("\nChoose an option:")
+                    print("\t1- Display all records")
+                    print("\t2- Display all time report")
+                    print("\n3- Back")
+
+                    choice_display = input("\nSelect one of the options above(1/2/3): \n")
+
+                    if choice_display == "1":
+                        all_records_df = budget.view_all_records()
+                        print(tabulate(all_records_df, headers='keys', tablefmt='fancy_grid', showindex=False))
+                    
+                    elif choice_display == "2":
+                        budget.print_report()
+
+                    elif choice_display == "3":
+                        break
+
+                    else:
+                        print("\n❌ Invalid choice. Select a number between 1 and 3")
+                        continue
+
+            elif choice == "6":
+                print("✅ Thank you for experimenting our program. Feel free to send any suggetions.")
+                break
+
+        else:
+            print("\n❌ Invalid choice. Select an option between 1 and 6!")
+            continue
+
 
 
 

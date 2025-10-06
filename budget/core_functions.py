@@ -1,5 +1,4 @@
 from budget.file_handling import create_file, load_data, save_data, add_record
-from tabulate import tabulate
 from datetime import datetime
 
 class BudgetTracker:
@@ -18,7 +17,7 @@ class BudgetTracker:
 
         validated = self.validate_record(**params)
         if isinstance(validated, str):  # validation error returned
-            return validated
+            raise ValueError(validated)
         
         if self.df.empty:
             new_id = 1
@@ -47,7 +46,7 @@ class BudgetTracker:
 
         validated = self.validate_record(**params)
         if isinstance(validated, str):  # validation error returned
-            return validated
+            raise ValueError(validated)
         
         if self.df.empty:
             new_id = 1
@@ -98,8 +97,6 @@ class BudgetTracker:
             return 0
         expenses = self.df[self.df['Type'] == 'Expense']
         return expenses['Amount'].min()
-        # min_expense = self.df[self.df['Amount'] == self.df['Amount'].min()].iloc[0]
-        # return min_expense[['Category', 'Amount']]  Formatting Output for UX
 
     def calculate_min_income(self):
         if self.df.empty:
@@ -169,6 +166,8 @@ class BudgetTracker:
         save_data(self.data_file, self.df)
     
     def delete_all_rows(self):
+        if self.df.empty:
+            raise ValueError("There were no records in the file!")
         self.df = self.df.head(0)
         save_data(self.data_file,self.df)
 
@@ -196,7 +195,7 @@ class BudgetTracker:
 
         validated = self.validate_record(**params)
         if isinstance(validated, str):  # validation error returned
-            return validated
+            raise ValueError(validated)
         
         # Update DataFrame with validated value
         df_field = field_map[field_lower]
@@ -219,6 +218,8 @@ class BudgetTracker:
         if category is not None:
             if not isinstance(category, str) or not category.strip():
                 return "Category must be a non-empty string"
+            if not category.replace(" ", "").isalpha():
+                return "Category must contain only letters and spaces"
             validated["Category"] = category
 
         if amount is not None:
