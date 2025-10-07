@@ -100,10 +100,10 @@ def test_update_record(budget_instance):
     budget.update_record(1,"Category","Groceries")
     assert budget.df.loc[0,"Category"]=="Groceries"
     # Invalid updates
-    result = budget.update_record(1,"Amount",-100)
-    assert "positive" in result.lower()
-    result = budget.update_record(1,"Date","2025-10-01")
-    assert "invalid date" in result.lower()
+    with pytest.raises(ValueError, match="Amount must be positive!"):
+        budget.update_record(1, "Amount", -100)
+    with pytest.raises(ValueError, match="Invalid date"):
+        budget.update_record(1, "Date", "2025-10-01")
 
 def test_update_type(budget_instance):
     budget, _ = budget_instance

@@ -106,3 +106,13 @@
     - Update Readme
 
     - Deploy the final version to github
+
+# Day 8 - 07/10/2025
+
+- Finalized UX with immediate feedback for added/updated records.
+
+- Core functions fully validated; exceptions handled; file handling ensures data integrity.
+
+- Tested all CRUD operations from user perspective; no errors found.
+
+- Project deployed to GitHub with requirements.txt, screenshots, and documentation    

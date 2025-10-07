@@ -66,14 +66,9 @@ def main():
                                 add_expense_note = input("\nAdd a note to this expense, if you wish you can leave it empty: ")
 
                                 try:
-                                    # Get the next ID
-                                    add_expense_next_id = (budget.df['ID'].max() or 0) + 1
-
+                                    
                                     # Attempt to add expense
                                     budget.add_expense(add_expense_date,add_expense_category,add_expense_amount,add_expense_note)
-
-                                    # Get the new row
-                                    add_expense_new_row = budget.df[budget.df['ID'] == add_expense_next_id]
 
                                 except ValueError as e:
                                     print(f"\n❌ Failed to add expense: {e}. Try again!")
@@ -81,6 +76,12 @@ def main():
                                     if add_expense_exit not in ("y", "yes", "yep", "ye"):
                                         break
                                 else:
+                                    # Get the next ID
+                                    add_expense_last_id = budget.df['ID'].max()
+
+                                    # Get the new row
+                                    add_expense_new_row = budget.df[budget.df['ID'] == add_expense_last_id]
+                                    
                                     print("\n✅ Expense added sucessfully!\n")
                                     print(tabulate(add_expense_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
                                     break
@@ -93,11 +94,7 @@ def main():
                                 add_income_note = input("\nAdd a note to this income, if you wish you can leave it empty: ")
                                 
                                 try:
-                                    add_income_next_id = (budget.df['ID'].max() or 0) + 1
-
                                     budget.add_income(add_income_date,add_income_category,add_income_amount,add_income_note)
-
-                                    add_income_new_row = budget.df[budget.df['ID'] == add_income_next_id]
 
                                 except ValueError as e:
                                     print(f"\n❌ Failed to add income: {e}. Try again!")
@@ -105,6 +102,8 @@ def main():
                                     if add_income_exit not in ("y", "yes", "yep", "ye"):
                                         break
                                 else:
+                                    add_income_last_id = budget.df['ID'].max()
+                                    add_income_new_row = budget.df[budget.df['ID'] == add_income_last_id]
                                     print("\n✅ Income added sucessfully!\n")
                                     print(tabulate(add_income_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
                                     break
@@ -256,11 +255,7 @@ def main():
                             new_value = input("Write the new value for the field you want to update: ")
 
                             try:
-                                update_record_next_id = (budget.df['ID'].max() or 0) + 1
-
                                 budget.update_record(record_id, field, new_value)
-
-                                update_record_new_row = budget.df[budget.df['ID'] == update_record_next_id]
 
                             except ValueError as e:
                                 print(f"\n❌ Failed to update record: {e}. Try again!")
@@ -268,6 +263,8 @@ def main():
                                 if update_record_exit not in ("y", "yes", "yep", "ye"):
                                     break
                             else:
+                                update_record_next_id = budget.df['ID'].max()
+                                update_record_new_row = budget.df[budget.df['ID'] == update_record_next_id]
                                 print("\n✅ Record Field updated sucessfully!\n")
                                 print(tabulate(update_record_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
                                 break
@@ -277,11 +274,7 @@ def main():
                             row_id = int(input("Write the 'id' of the record you want to update the type: "))
 
                             try:
-                                update_type_next_id = (budget.df['ID'].max() or 0) + 1
-
                                 budget.update_type(row_id)
-
-                                update_type_new_row = budget.df[budget.df['ID'] == update_type_next_id]
 
                             except ValueError as e:
                                 print(f"\n❌ Failed to update type: {e}. Try again!")
@@ -289,6 +282,8 @@ def main():
                                 if update_type_exit not in ("y", "yes", "yep", "ye"):
                                     break
                             else:
+                                update_type_next_id = budget.df['ID'].max()
+                                update_type_new_row = budget.df[budget.df['ID'] == update_type_next_id]
                                 print("\n✅ Record Type updated sucessfully!\n")
                                 print(tabulate(update_type_new_row, headers='keys', tablefmt='fancy_grid', showindex=False))
                                 break
